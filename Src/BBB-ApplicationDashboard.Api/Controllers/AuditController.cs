@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BBB_ApplicationDashboard.Api.Controllers
 {
-    public class AuditController(IAuditService auditService, IN8NAuditService n8n) : CustomControllerBase
+    public class AuditController(IAuditService auditService, IN8NAuditService n8n)
+        : CustomControllerBase
     {
         [HttpPost("log")]
         public async Task<IActionResult> LogAudit(ActivityEvent activityEvent)
@@ -57,10 +58,15 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(entities);
         }
 
+        [HttpGet("actions")]
+        public async Task<IActionResult> GetActions()
+        {
+            var actions = await auditService.GetActions();
+            return SuccessResponseWithData(actions);
+        }
+
         [HttpGet("n8n/log")]
-        public async Task<IActionResult> LogN8NEvent(
-            [FromBody] Dictionary<string, object> payload
-        )
+        public async Task<IActionResult> LogN8NEvent([FromBody] Dictionary<string, object> payload)
         {
             await n8n.Add(payload);
             return SuccessResponse("N8N Audit logged successfully");
