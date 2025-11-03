@@ -95,6 +95,8 @@ public class Accreditation
     public required string SubmittedByEmail { get; set; }
 
     public required Source PartnershipSource { get; set; }
+
+    public DateTime? CreatedAt { get; set; }
 }
 
 public class License

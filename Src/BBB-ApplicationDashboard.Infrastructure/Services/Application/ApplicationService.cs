@@ -39,7 +39,7 @@ public class ApplicationService(ApplicationDbContext context) : IApplicationServ
         accreditation.ApplicationStatusInternal =
             ApplicationStatusInternal.Accreditation_Services_Review;
         accreditation.ApplicationNumber = applicationNumber;
-
+        accreditation.CreatedAt = DateTime.UtcNow;
         context.Accreditations.Add(accreditation);
         await context.SaveChangesAsync();
 
@@ -110,6 +110,7 @@ public class ApplicationService(ApplicationDbContext context) : IApplicationServ
                 SubmittedByEmail = a.SubmittedByEmail,
                 ApplicationStatusInternal = a.ApplicationStatusInternal.ToString(),
                 ApplicationStatusExternal = a.ApplicationStatusExternal.ToString(),
+                CreatedAt = a.CreatedAt,
             })
             .ToListAsync();
 

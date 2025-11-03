@@ -12,4 +12,5 @@ public class InternalApplicationResponse
     public string? SubmittedByEmail { get; set; }
     public string? ApplicationStatusInternal { get; set; }
     public string? ApplicationStatusExternal { get; set; }
+    public DateTime? CreatedAt { get; set; }
 }
