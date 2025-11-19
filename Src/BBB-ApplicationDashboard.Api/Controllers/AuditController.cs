@@ -1,4 +1,5 @@
-﻿using BBB_ApplicationDashboard.Application.DTOs.PaginatedDtos;
+﻿using BBB_ApplicationDashboard.Application.DTOs.Audit;
+using BBB_ApplicationDashboard.Application.DTOs.PaginatedDtos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -62,6 +63,20 @@ namespace BBB_ApplicationDashboard.Api.Controllers
         public async Task<IActionResult> GetActions()
         {
             var actions = await auditService.GetActions();
+            return SuccessResponseWithData(actions);
+        }
+
+        [HttpPost("status-line-chart-data")]
+        public async Task<IActionResult> GetChart([FromBody] AuditLineChartRequest request)
+        {
+            var data = await auditService.GetActivityLineChartDataGrouped(request);
+            return SuccessResponseWithData(data);
+        }
+
+        [HttpGet("top-three-users")]
+        public async Task<IActionResult> GetTopThreeUsers()
+        {
+            var actions = await auditService.GetTopUsersPerEntityWithStatus();
             return SuccessResponseWithData(actions);
         }
 

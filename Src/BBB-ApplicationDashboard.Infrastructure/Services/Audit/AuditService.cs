@@ -4,7 +4,6 @@ using BBB_ApplicationDashboard.Application.Interfaces;
 using BBB_ApplicationDashboard.Domain.Entities;
 using BBB_ApplicationDashboard.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace BBB_ApplicationDashboard.Infrastructure.Services.Audit
 {
@@ -91,7 +90,6 @@ namespace BBB_ApplicationDashboard.Infrastructure.Services.Audit
                     EntityIdentifier = ae.EntityIdentifier,
                     Status = ae.Status,
                     UserVersion = ae.UserVersion,
-
                 })
                 .ToListAsync();
             return new PaginatedResponse<SimpleAuditResponse>(pageIndex, pageSize, count, audits);
@@ -145,6 +143,194 @@ namespace BBB_ApplicationDashboard.Infrastructure.Services.Audit
                 .OrderByDescending(v => v)
                 .ToListAsync();
             return userVersions;
+        }
+
+        public async Task<AuditLineChartGroupedResponse> GetActivityLineChartDataGrouped(
+            AuditLineChartRequest request
+        )
+        {
+            // -------------------------------------------------
+            // 1) Determine date range based on preset
+            // -------------------------------------------------
+            var today = DateTime.Now.Date;
+            DateOnly toDate = DateOnly.FromDateTime(today);
+
+            DateOnly fromDate = request.Preset switch
+            {
+                "7d" => toDate.AddDays(-7),
+                "14d" => toDate.AddDays(-14),
+                "30d" => toDate.AddDays(-30),
+                _ => throw new ArgumentException("Invalid preset. Allowed: 7d, 14d, 30d"),
+            };
+
+            // -------------------------------------------------
+            // 2) Convert DateOnly → DateTimeOffset (UTC REQUIRED)
+            // -------------------------------------------------
+            var fromUtc = new DateTimeOffset(fromDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            var toUtc = new DateTimeOffset(toDate.ToDateTime(TimeOnly.MaxValue), TimeSpan.Zero);
+
+            // -------------------------------------------------
+            // 3) Excluded entities
+            // -------------------------------------------------
+            var ignoredEntities = new HashSet<string> { "USER", "SYSTEM" };
+
+            // -------------------------------------------------
+            // 4) Optimized DB query (UTC filters → INDEX FRIENDLY)
+            // -------------------------------------------------
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            var filtered = await context
+                .ActivityEvents.Where(ae =>
+                    !ignoredEntities.Contains(ae.Entity)
+                    && ae.Timestamp >= fromUtc
+                    && ae.Timestamp <= toUtc
+                )
+                .Select(ae => new
+                {
+                    ae.Entity,
+                    Date = DateOnly.FromDateTime(ae.Timestamp.LocalDateTime), // convert AFTER query
+                    ae.Status,
+                })
+                .ToListAsync();
+
+            sw.Stop();
+            Console.WriteLine($"⏱ Query Execution Time: {sw.ElapsedMilliseconds} ms");
+
+            // -------------------------------------------------
+            // 5) Group the results by Entity + Date
+            // -------------------------------------------------
+            var grouped = filtered
+                .GroupBy(x => new { x.Entity, x.Date })
+                .Select(g => new
+                {
+                    g.Key.Entity,
+                    g.Key.Date,
+                    Success = g.Count(e => e.Status == "SUCCESS"),
+                    Error = g.Count(e => e.Status == "ERROR"),
+                    Failure = g.Count(e => e.Status == "FAILURE"),
+                })
+                .ToList();
+
+            // -------------------------------------------------
+            // 6) Prepare final response
+            // -------------------------------------------------
+            var response = new AuditLineChartGroupedResponse();
+            var entityTypes = grouped.Select(g => g.Entity).Distinct().ToList();
+
+            // -------------------------------------------------
+            // 7) Build timeline for each entity
+            // -------------------------------------------------
+            foreach (var entity in entityTypes)
+            {
+                var entityRows = grouped.Where(g => g.Entity == entity).ToList();
+                var lookup = entityRows.ToDictionary(e => e.Date);
+
+                var list = new List<AuditLineChartPoint>();
+
+                for (var d = fromDate; d <= toDate; d = d.AddDays(1))
+                {
+                    if (lookup.TryGetValue(d, out var hit))
+                    {
+                        list.Add(
+                            new AuditLineChartPoint
+                            {
+                                Date = d,
+                                Success = hit.Success,
+                                Error = hit.Error,
+                                Failure = hit.Failure,
+                            }
+                        );
+                    }
+                    else
+                    {
+                        list.Add(
+                            new AuditLineChartPoint
+                            {
+                                Date = d,
+                                Success = 0,
+                                Error = 0,
+                                Failure = 0,
+                            }
+                        );
+                    }
+                }
+
+                response.Data[entity] = list;
+            }
+
+            // -------------------------------------------------
+            // 8) Build "ALL" timeline by summing all entities
+            // -------------------------------------------------
+            var allList = new List<AuditLineChartPoint>();
+
+            for (var d = fromDate; d <= toDate; d = d.AddDays(1))
+            {
+                int sumSuccess = 0,
+                    sumError = 0,
+                    sumFailure = 0;
+
+                foreach (var entity in entityTypes)
+                {
+                    var point = response.Data[entity].First(p => p.Date == d);
+
+                    sumSuccess += point.Success;
+                    sumError += point.Error;
+                    sumFailure += point.Failure;
+                }
+
+                allList.Add(
+                    new AuditLineChartPoint
+                    {
+                        Date = d,
+                        Success = sumSuccess,
+                        Error = sumError,
+                        Failure = sumFailure,
+                    }
+                );
+            }
+
+            response.Data["ALL"] = allList;
+
+            return response;
+        }
+
+        public async Task<
+            Dictionary<string, List<AuditTopUserResponse>>
+        > GetTopUsersPerEntityWithStatus()
+        {
+            var ignoredEntities = new HashSet<string> { "USER", "SYSTEM" };
+
+            var data = await context
+                .ActivityEvents.Where(ae => !ignoredEntities.Contains(ae.Entity))
+                .GroupBy(ae => new { ae.Entity, ae.User })
+                .Select(g => new
+                {
+                    g.Key.Entity,
+                    g.Key.User,
+                    Success = g.Count(e => e.Status == "SUCCESS"),
+                    Error = g.Count(e => e.Status == "ERROR"),
+                    Failure = g.Count(e => e.Status == "FAILURE"),
+                })
+                .ToListAsync();
+
+            var result = data.GroupBy(x => x.Entity)
+                .ToDictionary(
+                    entityGroup => entityGroup.Key,
+                    entityGroup =>
+                        entityGroup
+                            .Select(x => new AuditTopUserResponse
+                            {
+                                User = x.User,
+                                Success = x.Success,
+                                Error = x.Error,
+                                Failure = x.Failure,
+                            })
+                            .OrderByDescending(x => x.Total)
+                            .Take(3)
+                            .ToList()
+                );
+
+            return result;
         }
     }
 }

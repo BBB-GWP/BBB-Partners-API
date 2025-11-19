@@ -79,7 +79,8 @@ public static class WebApplicationExtension
     public static IServiceCollection AddDatabase(this IServiceCollection services)
     {
         // PostgreSQL Configuration
-        services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+        services.AddDbContext<ApplicationDbContext>(
+            (serviceProvider, options) =>
             {
                 var secretService = serviceProvider.GetRequiredService<ISecretService>();
                 var connectionString = secretService.GetSecret(

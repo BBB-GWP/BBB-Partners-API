@@ -18,5 +18,9 @@ namespace BBB_ApplicationDashboard.Application.Interfaces
         Task<List<string>> GetEntities();
         Task<List<string?>> GetStatuses();
         Task<List<string?>> GetUserVersions();
+        Task<AuditLineChartGroupedResponse> GetActivityLineChartDataGrouped(
+            AuditLineChartRequest request
+        );
+        Task<Dictionary<string, List<AuditTopUserResponse>>> GetTopUsersPerEntityWithStatus();
     }
 }
