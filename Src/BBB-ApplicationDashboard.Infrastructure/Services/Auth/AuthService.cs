@@ -15,10 +15,8 @@ namespace BBB_ApplicationDashboard.Infrastructure.Services.Auth;
 
 public class AuthService(ISecretService secretService, ILogger<AuthService> logger) : IAuthService
 {
-    // private readonly string googleRedirectUri =
-    //     $"{secretService.GetSecret(ProjectSecrets.PartnersRedirectBaseUrl, Folders.Auth)}/api/auth/google-callback";
-
-    private readonly string googleRedirectUri = "https://localhost:7100/api/auth/google-callback";
+    private readonly string googleRedirectUri =
+        $"{secretService.GetSecret(ProjectSecrets.PartnersRedirectBaseUrl, Folders.Auth)}/api/auth/google-callback";
 
     private readonly string googleClientId = secretService.GetSecret(
         ProjectSecrets.PartnersGoogleClientId,
