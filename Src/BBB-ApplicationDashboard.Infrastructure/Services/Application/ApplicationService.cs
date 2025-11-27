@@ -34,7 +34,7 @@ public class ApplicationService(ApplicationDbContext context) : IApplicationServ
         Accreditation accreditation = request.Adapt<Accreditation>();
         accreditation.ApplicationId = Guid.NewGuid();
         accreditation.TrackingLink =
-            $"https://bbb-partners.playdough.co/track-application/{applicationNumber}";
+            $"https://sync.bbb-gwp-dev.org/track-application/{applicationNumber}";
         accreditation.ApplicationStatusExternal = ApplicationStatusExternal.Submitted;
         accreditation.ApplicationStatusInternal =
             ApplicationStatusInternal.Accreditation_Services_Review;

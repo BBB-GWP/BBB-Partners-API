@@ -33,7 +33,7 @@ public class MainServerClient(
         );
 
         var response = await httpClient.PostAsync(
-            $"http://bbb-sync.playdough.co/api/Partner/accreditation-form/{internalAppId}",
+            $"https://sync.bbb-gwp-dev.org/api/Partner/accreditation-form/{internalAppId}",
             ConstructHttpContent(submittedData)
         );
         logger.LogInformation(await response.Content.ReadAsStringAsync());
