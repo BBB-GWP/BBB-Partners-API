@@ -33,7 +33,7 @@ public class MainServerClient(
         );
 
         var response = await httpClient.PostAsync(
-            $"https://sync.bbb-gwp-dev.org/api/Partner/accreditation-form/{internalAppId}",
+            $"{secretService.GetSecret(ProjectSecrets.SyncAPIBaseUrl, Folders.Domains)}api/Partner/accreditation-form/{internalAppId}",
             ConstructHttpContent(submittedData)
         );
         logger.LogInformation(await response.Content.ReadAsStringAsync());

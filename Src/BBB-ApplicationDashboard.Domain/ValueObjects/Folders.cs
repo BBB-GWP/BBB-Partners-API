@@ -4,5 +4,6 @@ public enum Folders
 {
     ConnectionStrings,
     Auth,
-    Cloudinary
+    Cloudinary,
+    Domains,
 }

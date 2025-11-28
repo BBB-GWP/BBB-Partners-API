@@ -15,5 +15,6 @@ public enum ProjectSecrets
     DumpMongoDBConnection,
     CloudinaryApiKey,
     CloudinaryApiSecret,
-    CloudinaryCloudname
+    CloudinaryCloudname,
+    SyncAPIBaseUrl,
 }

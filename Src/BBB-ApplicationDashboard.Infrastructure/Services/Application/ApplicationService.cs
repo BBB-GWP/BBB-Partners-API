@@ -11,7 +11,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BBB_ApplicationDashboard.Infrastructure.Services.Application;
 
-public class ApplicationService(ApplicationDbContext context) : IApplicationService
+public class ApplicationService(ApplicationDbContext context, ISecretService secretService)
+    : IApplicationService
 {
     public async Task<AccreditationResponse> CreateApplicationAsync(SubmittedDataRequest request)
     {
@@ -34,7 +35,7 @@ public class ApplicationService(ApplicationDbContext context) : IApplicationServ
         Accreditation accreditation = request.Adapt<Accreditation>();
         accreditation.ApplicationId = Guid.NewGuid();
         accreditation.TrackingLink =
-            $"https://sync.bbb-gwp-dev.org/track-application/{applicationNumber}";
+            $"{secretService.GetSecret(ProjectSecrets.SyncAPIBaseUrl, Folders.Domains)}track-application/{applicationNumber}";
         accreditation.ApplicationStatusExternal = ApplicationStatusExternal.Submitted;
         accreditation.ApplicationStatusInternal =
             ApplicationStatusInternal.Accreditation_Services_Review;

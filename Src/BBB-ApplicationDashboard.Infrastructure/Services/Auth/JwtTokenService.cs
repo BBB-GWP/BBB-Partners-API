@@ -31,9 +31,10 @@ public class JwtTokenService(ISecretService secretService) : IJwtTokenService
         {
             "patrick.giese@thebbb.org",
             "aaron.costilla@thebbb.org",
-            "ahmad.mahfouz@everythingtogain.com",
-            "yousef.shawky@everythingtogain.com",
-            "omar.saleh@everythingtogain.com",
+            "ahmad.mahfouz@thebbb.org",
+            "youssef.shawky@thebbb.org",
+            "omar.saleh@thebbb.org",
+            "mahmoud.nasr@thebbb.org",
         };
 
         if (specialEmails.Contains(user.Email))
