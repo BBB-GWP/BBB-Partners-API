@@ -51,7 +51,7 @@ public class UserService(ApplicationDbContext context) : IUserService
         //! 5) filter by isActive
         if (request.IsActive.HasValue)
         {
-            query = query.Where(u => u.IsCSVSync == request.IsActive.Value);
+            query = query.Where(u => u.IsActive == request.IsActive.Value);
         }
 
         //! 6) get total count
