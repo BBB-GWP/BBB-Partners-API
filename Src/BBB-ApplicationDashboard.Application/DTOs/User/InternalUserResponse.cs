@@ -2,7 +2,7 @@ using System;
 
 namespace BBB_ApplicationDashboard.Application.DTOs.User;
 
-public class AdminDashboardUserResponse
+public class InternalUserResponse
 {
     public Guid UserId { get; set; }
     public string? Email { get; set; }

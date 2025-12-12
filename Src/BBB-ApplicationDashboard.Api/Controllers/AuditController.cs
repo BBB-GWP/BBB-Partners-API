@@ -1,6 +1,6 @@
 ﻿using BBB_ApplicationDashboard.Application.DTOs.Audit;
 using BBB_ApplicationDashboard.Application.DTOs.PaginatedDtos;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BBB_ApplicationDashboard.Api.Controllers
@@ -15,6 +15,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponse("Audit logged successfully");
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAudit(Guid id)
         {
@@ -22,6 +23,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(audit);
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpGet]
         public async Task<IActionResult> GetAllFilteredAudits(
             [FromQuery] AuditPaginationRequest request
@@ -31,6 +33,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(audits);
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
@@ -38,6 +41,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(users);
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpGet("statuses")]
         public async Task<IActionResult> GetStatuses()
         {
@@ -45,6 +49,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(statuses);
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpGet("user-versions")]
         public async Task<IActionResult> GetUserVersions()
         {
@@ -52,6 +57,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(versions);
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpGet("entities")]
         public async Task<IActionResult> GetEntities()
         {
@@ -59,6 +65,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(entities);
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpGet("actions")]
         public async Task<IActionResult> GetActions()
         {
@@ -66,6 +73,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(actions);
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpPost("status-line-chart-data")]
         public async Task<IActionResult> GetChart([FromBody] AuditLineChartRequest request)
         {
@@ -73,6 +81,7 @@ namespace BBB_ApplicationDashboard.Api.Controllers
             return SuccessResponseWithData(data);
         }
 
+        [Authorize(Policy = "Internal")]
         [HttpGet("top-three-users")]
         public async Task<IActionResult> GetTopThreeUsers()
         {

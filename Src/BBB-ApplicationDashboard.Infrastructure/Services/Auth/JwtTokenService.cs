@@ -2,6 +2,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using BBB_ApplicationDashboard.Application.Interfaces;
 using BBB_ApplicationDashboard.Domain.ValueObjects;
 using BBB_ApplicationDashboard.Infrastructure.Exceptions.User;
@@ -20,13 +21,10 @@ public class JwtTokenService(ISecretService secretService) : IJwtTokenService
             throw new UserBadRequestException("Key length must be at least 64 characters!");
 
         //!2) Claims
-        List<Claim> claims =
-        [
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Role, user.UserSource.ToString()),
-        ];
+        List<string> roles = [];
 
-        // ✅ special emails
+        roles.Add(user.UserSource.ToString().ToLower());
+
         var specialEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "patrick.giese@thebbb.org",
@@ -38,14 +36,16 @@ public class JwtTokenService(ISecretService secretService) : IJwtTokenService
         };
 
         if (specialEmails.Contains(user.Email))
-            claims.Add(new Claim("specialAccess", "true"));
+            roles.Add("specialButton");
 
         if (user.IsAdmin)
-        {
-            Console.WriteLine("user is admin? " + user.IsAdmin);
-            claims.Add(new Claim("isAdmin", "true"));
-        }
+            roles.Add("admin");
 
+        List<Claim> claims =
+        [
+            new(ClaimTypes.Email, user.Email),
+            new("roles", JsonSerializer.Serialize(roles), JsonClaimValueTypes.JsonArray),
+        ];
         //!3) Token descriptor
         SecurityTokenDescriptor tokenDescriptor = new()
         {

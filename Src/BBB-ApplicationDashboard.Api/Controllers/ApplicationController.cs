@@ -68,10 +68,12 @@ public class ApplicationController(
     }
 
     [Authorize(Policy = "Internal")]
-    [HttpGet("internal-data")]
-    public async Task<IActionResult> GetInternalData([FromQuery] InternalPaginationRequest request)
+    [HttpGet("internal")]
+    public async Task<IActionResult> GetInternalApplications(
+        [FromQuery] InternalPaginationRequest request
+    )
     {
-        var applications = await applicationService.GetInternalData(request);
+        var applications = await applicationService.GetInternalApplications(request);
         return SuccessResponseWithData(applications);
     }
 
@@ -87,7 +89,7 @@ public class ApplicationController(
     }
 
     [Authorize(Policy = "Internal")]
-    [HttpGet("internal-data/{id}")]
+    [HttpGet("internal/{id}")]
     public async Task<IActionResult> GetApplicationDetails(Guid id)
     {
         Accreditation? applicationDetails = await applicationService.GetApplicationById(id);
@@ -108,7 +110,7 @@ public class ApplicationController(
     }
 
     [Authorize]
-    [HttpGet("external-data")]
+    [HttpGet("external")]
     public async Task<IActionResult> GetExternalData([FromQuery] ExternalPaginationRequest request)
     {
         var roleClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
@@ -118,18 +120,7 @@ public class ApplicationController(
         if (!Enum.TryParse<Source>(roleClaim, ignoreCase: true, out var source))
             return BadRequest();
 
-        var applications = await applicationService.GetExternalData(request, source);
-
-        return SuccessResponseWithData(applications);
-    }
-
-    [Authorize(Policy = "Internal")]
-    [HttpGet("external-data/admins")]
-    public async Task<IActionResult> GetExternalDataForAdmins(
-        [FromQuery] AdminExternalPaginationRequest request
-    )
-    {
-        var applications = await applicationService.GetExternalDataForAdmins(request);
+        var applications = await applicationService.GetExternalApplications(request, source);
 
         return SuccessResponseWithData(applications);
     }
