@@ -10,16 +10,14 @@ public interface IApplicationService
 {
     Task<AccreditationResponse> CreateApplicationAsync(SubmittedDataRequest request);
     Task UpdateApplicationAsync(ApplicationInfo applicationInfo);
-    Task<PaginatedResponse<InternalApplicationResponse>> GetInternalData(
+    Task<PaginatedResponse<InternalApplicationResponse>> GetInternalApplications(
         InternalPaginationRequest request
     );
-    Task<PaginatedResponse<ExternalApplicationResponse>> GetExternalData(
+    Task<PaginatedResponse<ExternalApplicationResponse>> GetExternalApplications(
         ExternalPaginationRequest request,
         Source source
     );
-    Task<PaginatedResponse<ExternalApplicationResponse>> GetExternalDataForAdmins(
-        AdminExternalPaginationRequest request
-    );
+
     Task<bool> UpdateApplicationStatus(
         UpdateApplicationStatusRequest updateApplicationStatusRequest
     );

@@ -7,4 +7,5 @@ public class InternalPaginationRequest : BasePaginationRequest
 {
     public ApplicationStatusInternal? InternalStatus { get; set; } = null;
     public ApplicationStatusExternal? ExternalStatus { get; set; } = null;
+    public Source? PartnershipSource { get; set; } = null;
 }
