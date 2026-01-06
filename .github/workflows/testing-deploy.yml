@@ -1,14 +1,16 @@
-name: Manual Build Branch
+name: Build and Deploy to Coolify
 
 on:
+  push:
+    branches: [testing]
   workflow_dispatch:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: bbbsync/testing-application-api
+  IMAGE_NAME: bbbsync/bbb-partners-api-testing
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,24 +26,24 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=sha,format=long
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.testing
           push: true
-
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Deploy to Coolify
+        if: github.ref == 'refs/heads/testing'
+        uses: gitnasr/coolify-trigger-deploy@v2.0.0
+        with:
+          docker_image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          coolify_url: ${{ secrets.COOLIFY_URL }}
+          coolify_resource_id: ${{ secrets.COOLIFY_RESOURCE_ID_TESTING }}
+          coolify_api_token: ${{ secrets.COOLIFY_API_TOKEN }}

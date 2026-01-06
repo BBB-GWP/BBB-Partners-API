@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: omar0saleh/application-dashboard
+  IMAGE_NAME: bbbsync/bbb-partners-api
 
 jobs:
   build-and-deploy:
