@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using BBB_ApplicationDashboard.Application;
 using BBB_ApplicationDashboard.Infrastructure;
@@ -7,6 +9,7 @@ using BBB_ApplicationDashboard.Infrastructure.Services.Clients;
 using BBB_ApplicationDashboard.Infrastructure.Services.Cloudinary;
 using BBB_ApplicationDashboard.Infrastructure.Services.N8n;
 using Microsoft.AspNetCore.Authentication;
+using MongoDB.Bson;
 
 namespace BBB_ApplicationDashboard.Api.Extensions;
 
@@ -148,18 +151,6 @@ public static class WebApplicationExtension
                             return Task.CompletedTask;
                         },
                     };
-
-                    options.Events.OnMessageReceived = context =>
-                    {
-                        // if (
-                        //     context.Request.Cookies.TryGetValue(
-                        //         "BBBPartnersAuth",
-                        //         out var cookieToken
-                        //     )
-                        // )
-                        //     context.Token = cookieToken;
-                        return Task.CompletedTask;
-                    };
                 }
             )
             .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
@@ -169,9 +160,9 @@ public static class WebApplicationExtension
 
         services.AddAuthorization(options =>
         {
-            // Policy for Internal only
-            options.AddPolicy("Internal", policy => policy.RequireRole(Source.Internal.ToString()));
-            options.AddPolicy("Admin", policy => policy.RequireClaim("isAdmin", "true"));
+            options.AddPolicy("Internal", policy => policy.RequireRole("internal"));
+
+            options.AddPolicy("Admin", policy => policy.RequireRole("admin"));
         });
         return services;
     }

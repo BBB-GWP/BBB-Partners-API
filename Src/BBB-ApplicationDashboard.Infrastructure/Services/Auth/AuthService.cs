@@ -80,6 +80,10 @@ public class AuthService(ISecretService secretService, ILogger<AuthService> logg
 
         logger.LogInformation(flow.ProjectId);
 
+        logger.LogInformation($"RedirectURL: {redirectUrl}");
+
+        logger.LogInformation($"Google RedirectURI: {googleRedirectUri}");
+
         var tokens =
             await flow.ExchangeCodeForTokenAsync(
                 userId: null,

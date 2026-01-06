@@ -5,7 +5,6 @@ using BBB_ApplicationDashboard.Application.Interfaces;
 using BBB_ApplicationDashboard.Infrastructure.Data.Context;
 using BBB_ApplicationDashboard.Infrastructure.Exceptions.User;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Ocsp;
 
 namespace BBB_ApplicationDashboard.Infrastructure.Services.User;
 
@@ -21,8 +20,8 @@ public class UserService(ApplicationDbContext context) : IUserService
         await context.SaveChangesAsync();
     }
 
-    public async Task<PaginatedResponse<AdminDashboardUserResponse>> GetAdminDashboardUsers(
-        UserPaginationRequest request
+    public async Task<PaginatedResponse<InternalUserResponse>> GetInternalUsers(
+        InternalUserPaginationRequest request
     )
     {
         //! 1) Get all users with Source Internal
@@ -52,7 +51,7 @@ public class UserService(ApplicationDbContext context) : IUserService
         //! 5) filter by isActive
         if (request.IsActive.HasValue)
         {
-            query = query.Where(u => u.IsCSVSync == request.IsActive.Value);
+            query = query.Where(u => u.IsActive == request.IsActive.Value);
         }
 
         //! 6) get total count
@@ -63,11 +62,11 @@ public class UserService(ApplicationDbContext context) : IUserService
         int pageSize = Math.Max(1, Math.Min(100, request.PageSize));
 
         //! 8) execute query
-        IEnumerable<AdminDashboardUserResponse> users = await query
+        IEnumerable<InternalUserResponse> users = await query
             .OrderBy(a => a.Email)
             .Skip(pageIndex * pageSize)
             .Take(pageSize)
-            .Select(a => new AdminDashboardUserResponse
+            .Select(a => new InternalUserResponse
             {
                 UserId = a.UserId,
                 Email = a.Email,
@@ -78,7 +77,53 @@ public class UserService(ApplicationDbContext context) : IUserService
             .ToListAsync();
 
         //! 9) return result
-        return new PaginatedResponse<AdminDashboardUserResponse>(pageIndex, pageSize, total, users);
+        return new PaginatedResponse<InternalUserResponse>(pageIndex, pageSize, total, users);
+    }
+
+    public async Task<PaginatedResponse<ExternalUserResponse>> GetExternalUsers(
+        ExternalUserPaginationRequest request
+    )
+    {
+        //! 1) Get all users without Source Internal
+        var query = context
+            .Users.AsNoTracking()
+            .Where(u => u.UserSource != Domain.ValueObjects.Source.Internal);
+
+        //! 2) filter by UserSource
+        if (request.UserSource.HasValue)
+        {
+            query = query.Where(u => u.UserSource == request.UserSource.Value);
+        }
+
+        //! 3) filter by email
+        if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+        {
+            var searchTerm = request.SearchTerm.Trim();
+            query = query.Where(u => EF.Functions.ILike(u.Email, $"%{searchTerm}%"));
+        }
+
+        //! 5) get total count
+        int total = await query.CountAsync();
+
+        //! 6) Apply pagination
+        int pageIndex = request.PageNumber - 1;
+        int pageSize = Math.Max(1, Math.Min(100, request.PageSize));
+
+        //! 7) execute query
+        IEnumerable<ExternalUserResponse> users = await query
+            .OrderBy(a => a.Email)
+            .Skip(pageIndex * pageSize)
+            .Take(pageSize)
+            .Select(a => new ExternalUserResponse
+            {
+                UserId = a.UserId,
+                Email = a.Email,
+                UserSource = a.UserSource,
+            })
+            .ToListAsync();
+
+        //! 8) return result
+        return new PaginatedResponse<ExternalUserResponse>(pageIndex, pageSize, total, users);
     }
 
     public async Task DeleteUser(Guid id)
@@ -89,7 +134,28 @@ public class UserService(ApplicationDbContext context) : IUserService
         await context.SaveChangesAsync();
     }
 
-    public async Task CreateAdminDashboardUser(AdminDashboardCreateUserRequest request)
+    public async Task CreateExternalUser(CreateExternalUserRequest request)
+    {
+        //! 1) check if email is duplicate
+        var user = await FindUser(request.Email.ToLowerInvariant());
+        if (user is not null)
+            throw new UserBadRequestException("User already exists");
+
+        //! 2) create user
+        var newUser = new Domain.Entities.User
+        {
+            UserSource = request.UserSource,
+            Email = request.Email.ToLowerInvariant().Trim(),
+            IsAdmin = false,
+            IsCSVSync = false,
+        };
+
+        //! 3) save into database
+        await context.AddAsync(newUser);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task CreateInternalUser(CreateInternalUserRequest request)
     {
         //! 1) check if email is duplicate
         var user = await FindUser(request.Email.ToLowerInvariant());
@@ -110,7 +176,7 @@ public class UserService(ApplicationDbContext context) : IUserService
         await context.SaveChangesAsync();
     }
 
-    public async Task CreateAdminDashboardUsers(string usersCsv)
+    public async Task CreateInternalUsers(string usersCsv)
     {
         if (string.IsNullOrWhiteSpace(usersCsv))
             return;
@@ -272,7 +338,7 @@ public class UserService(ApplicationDbContext context) : IUserService
         return result;
     }
 
-    public async Task UpdateAdminDashboardUser(Guid id, AdminDashboardUpdateUserRequest request)
+    public async Task UpdateInternalUser(Guid id, UpdateInternalUserRequest request)
     {
         //! 1) find user by id
         var user =
@@ -300,7 +366,29 @@ public class UserService(ApplicationDbContext context) : IUserService
         await context.SaveChangesAsync();
     }
 
-    public async Task<List<string>> GetAdminDashboardCSVUsers()
+    public async Task UpdateExternalUser(Guid id, UpdateExternalUserRequest request)
+    {
+        //! 1) find user by id
+        var user =
+            await context.Users.FindAsync(id)
+            ?? throw new UserNotFoundException($"User not found.");
+
+        //! 2) update email if provided
+        if (!string.IsNullOrEmpty(request.Email))
+        {
+            user.Email = request.Email.ToLowerInvariant();
+        }
+
+        //! 3) update IsCsvSync if provided
+        if (request.UserSource.HasValue)
+        {
+            user.UserSource = request.UserSource.Value;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<List<string>> GetInternalCSVUsers()
     {
         return await context
             .Users.AsNoTracking()
