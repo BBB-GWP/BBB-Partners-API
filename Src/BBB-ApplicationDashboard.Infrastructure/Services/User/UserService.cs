@@ -1,7 +1,9 @@
+using System.Linq.Expressions;
 using System.Text;
 using BBB_ApplicationDashboard.Application.DTOs.PaginatedDtos;
 using BBB_ApplicationDashboard.Application.DTOs.User;
 using BBB_ApplicationDashboard.Application.Interfaces;
+using BBB_ApplicationDashboard.Domain.ValueObjects;
 using BBB_ApplicationDashboard.Infrastructure.Data.Context;
 using BBB_ApplicationDashboard.Infrastructure.Exceptions.User;
 using Microsoft.EntityFrameworkCore;
@@ -62,13 +64,26 @@ public class UserService(ApplicationDbContext context) : IUserService
         int pageSize = Math.Max(1, Math.Min(100, request.PageSize));
 
         //! 8) execute query
-        IEnumerable<InternalUserResponse> users = await query
-            .OrderBy(a => a.Email)
+        // Sorting
+        if (
+            !string.IsNullOrWhiteSpace(request.SortBy)
+            && InternalUserSortMap.TryGetValue(request.SortBy.Trim(), out var sortExpr)
+        )
+        {
+            query =
+                request.SortDirection == SortDirection.Asc
+                    ? query.OrderBy(sortExpr).ThenBy(u => u.Email)
+                    : query.OrderByDescending(sortExpr).ThenBy(u => u.Email);
+        }
+        else
+            query = query.OrderBy(u => u.Email);
+
+        // Execute
+        var users = await query
             .Skip(pageIndex * pageSize)
             .Take(pageSize)
             .Select(a => new InternalUserResponse
             {
-                UserId = a.UserId,
                 Email = a.Email,
                 IsActive = a.IsActive,
                 IsAdmin = a.IsAdmin,
@@ -79,6 +94,17 @@ public class UserService(ApplicationDbContext context) : IUserService
         //! 9) return result
         return new PaginatedResponse<InternalUserResponse>(pageIndex, pageSize, total, users);
     }
+
+    private static readonly Dictionary<
+        string,
+        Expression<Func<Domain.Entities.User, object>>
+    > InternalUserSortMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Email"] = u => u.Email ?? string.Empty,
+        ["IsAdmin"] = u => u.IsAdmin,
+        ["IsCSVSync"] = u => u.IsCSVSync,
+        ["IsActive"] = u => u.IsActive,
+    };
 
     public async Task<PaginatedResponse<ExternalUserResponse>> GetExternalUsers(
         ExternalUserPaginationRequest request
