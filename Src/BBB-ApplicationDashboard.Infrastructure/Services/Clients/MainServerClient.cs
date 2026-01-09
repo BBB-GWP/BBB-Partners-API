@@ -42,4 +42,22 @@ public class MainServerClient(
         logger.LogInformation("✅ server answered with id: {id}", id);
         return id;
     }
+
+    public async Task<string> SendSyncBid(int bid)
+    {
+        httpClient.DefaultRequestHeaders.Add(
+            "X-API-KEY",
+            secretService.GetSecret(ProjectSecrets.APIAcessToken, Folders.Auth)
+        );
+
+        var response = await httpClient.PostAsync(
+            $"{secretService.GetSecret(ProjectSecrets.SyncAPIBaseUrl, Folders.Domains)}api/Partner/accreditation-form/{bid}",
+            ConstructHttpContent(bid)
+        );
+        logger.LogInformation(await response.Content.ReadAsStringAsync());
+        response.EnsureSuccessStatusCode();
+        var id = await response.Content.ReadAsStringAsync();
+        logger.LogInformation("✅ server answered with id: {id}", id);
+        return id;
+    }
 }

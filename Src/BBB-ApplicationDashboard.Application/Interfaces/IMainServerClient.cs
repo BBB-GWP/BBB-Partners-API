@@ -5,4 +5,5 @@ namespace BBB_ApplicationDashboard.Application.Interfaces;
 public interface IMainServerClient
 {
     public Task<string> SendFormData(SubmittedDataRequest submittedData, String internalAppId);
+    Task<string> SendSyncBid(int bid);
 }
