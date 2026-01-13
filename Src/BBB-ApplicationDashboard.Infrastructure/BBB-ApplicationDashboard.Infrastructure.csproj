@@ -24,4 +24,7 @@
     <ProjectReference Include="..\BBB-ApplicationDashboard.Application\BBB-ApplicationDashboard.Application.csproj" />
     <ProjectReference Include="..\BBB-ApplicationDashboard.Domain\BBB-ApplicationDashboard.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Services\Sync\" />
+  </ItemGroup>
 </Project>

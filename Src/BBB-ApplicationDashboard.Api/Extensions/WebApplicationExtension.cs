@@ -8,6 +8,7 @@ using BBB_ApplicationDashboard.Infrastructure.Services.Audit;
 using BBB_ApplicationDashboard.Infrastructure.Services.Clients;
 using BBB_ApplicationDashboard.Infrastructure.Services.Cloudinary;
 using BBB_ApplicationDashboard.Infrastructure.Services.N8n;
+using BBB_ApplicationDashboard.Infrastructure.Services.Sync;
 using Microsoft.AspNetCore.Authentication;
 using MongoDB.Bson;
 
@@ -189,6 +190,7 @@ public static class WebApplicationExtension
 
         //? Business Services
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ISyncService, SyncService>();
         services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<ITobService, TobService>();

@@ -1,7 +1,9 @@
-﻿using BBB_ApplicationDashboard.Application.DTOs.Audit;
+﻿using System.Linq.Expressions;
+using BBB_ApplicationDashboard.Application.DTOs.Audit;
 using BBB_ApplicationDashboard.Application.DTOs.PaginatedDtos;
 using BBB_ApplicationDashboard.Application.Interfaces;
 using BBB_ApplicationDashboard.Domain.Entities;
+using BBB_ApplicationDashboard.Domain.ValueObjects;
 using BBB_ApplicationDashboard.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
 
@@ -76,8 +78,22 @@ namespace BBB_ApplicationDashboard.Infrastructure.Services.Audit
             int pageIndex = request.PageNumber - 1;
             int pageSize = Math.Max(1, Math.Min(100, request.PageSize));
 
+            if (
+                !string.IsNullOrWhiteSpace(request.SortBy)
+                && SortMap.TryGetValue(request.SortBy.Trim(), out var sortExpr)
+            )
+            {
+                query =
+                    request.SortDirection == SortDirection.Asc
+                        ? query.OrderBy(sortExpr).ThenByDescending(ae => ae.Timestamp)
+                        : query.OrderByDescending(sortExpr).ThenByDescending(ae => ae.Timestamp);
+            }
+            else
+            {
+                query = query.OrderByDescending(ae => ae.Timestamp);
+            }
+
             var audits = await query
-                .OrderByDescending(ae => ae.Timestamp)
                 .Skip(pageIndex * pageSize)
                 .Take(pageSize)
                 .Select(ae => new SimpleAuditResponse
@@ -92,6 +108,7 @@ namespace BBB_ApplicationDashboard.Infrastructure.Services.Audit
                     UserVersion = ae.UserVersion,
                 })
                 .ToListAsync();
+
             return new PaginatedResponse<SimpleAuditResponse>(pageIndex, pageSize, count, audits);
         }
 
@@ -332,5 +349,18 @@ namespace BBB_ApplicationDashboard.Infrastructure.Services.Audit
 
             return result;
         }
+
+        private static readonly Dictionary<
+            string,
+            Expression<Func<ActivityEvent, object>>
+        > SortMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Timestamp"] = ae => ae.Timestamp,
+            ["User"] = ae => ae.User,
+            ["Action"] = ae => ae.Action,
+            ["Entity"] = ae => ae.Entity,
+            ["EntityIdentifier"] = ae => ae.EntityIdentifier ?? "",
+            ["Status"] = ae => ae.Status ?? "",
+        };
     }
 }

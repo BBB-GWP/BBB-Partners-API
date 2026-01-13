@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BBB_ApplicationDashboard.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251007172247_NewMigration_20251007202225")]
-    partial class NewMigration_20251007202225
+    [Migration("20260113174535_ChangeResolvedByColumnFromUserToEmail")]
+    partial class ChangeResolvedByColumnFromUserToEmail
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -99,6 +99,9 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
 
                     b.Property<string>("CompanyRecordID")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DoingBusinessAs")
                         .HasColumnType("text");
@@ -185,6 +188,9 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("SecondaryBusinessTypes")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("SecondaryContactTypes")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -232,8 +238,7 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
 
                     b.HasKey("ApplicationId");
 
-                    b.HasIndex("ApplicationNumber")
-                        .IsUnique();
+                    b.HasIndex("ApplicationNumber");
 
                     b.ToTable("Accreditations");
                 });
@@ -258,6 +263,12 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("Env")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Production");
+
                     b.Property<JsonDocument>("Metadata")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -268,7 +279,9 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
 
                     b.Property<string>("SyncSource")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("OnlineSync");
 
                     b.Property<DateTimeOffset>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -312,6 +325,48 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("BBB_ApplicationDashboard.Domain.Entities.WorkflowSetupFailure", b =>
+                {
+                    b.Property<Guid>("WorkflowSetupFailureID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExecutionUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FailureReason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HubSpotID")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsResolved")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ResolvedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("WorkflowSetupFailureID");
+
+                    b.ToTable("WorkflowSetupFailures");
                 });
 
             modelBuilder.Entity("BBB_ApplicationDashboard.Domain.Session", b =>
