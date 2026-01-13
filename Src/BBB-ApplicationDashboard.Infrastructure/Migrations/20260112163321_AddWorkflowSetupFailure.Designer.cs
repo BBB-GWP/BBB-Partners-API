@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BBB_ApplicationDashboard.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250929142748_AuditLogsSystem")]
-    partial class AuditLogsSystem
+    [Migration("20260112163321_AddWorkflowSetupFailure")]
+    partial class AddWorkflowSetupFailure
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -99,6 +99,9 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
 
                     b.Property<string>("CompanyRecordID")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DoingBusinessAs")
                         .HasColumnType("text");
@@ -185,6 +188,9 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("SecondaryBusinessTypes")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("SecondaryContactTypes")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -232,8 +238,7 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
 
                     b.HasKey("ApplicationId");
 
-                    b.HasIndex("ApplicationNumber")
-                        .IsUnique();
+                    b.HasIndex("ApplicationNumber");
 
                     b.ToTable("Accreditations");
                 });
@@ -258,6 +263,12 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("Env")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Production");
+
                     b.Property<JsonDocument>("Metadata")
                         .IsRequired()
                         .HasColumnType("jsonb");
@@ -265,6 +276,12 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
                     b.Property<string>("Status")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SyncSource")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("OnlineSync");
 
                     b.Property<DateTimeOffset>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -293,12 +310,93 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsCSVSync")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("UserSource")
                         .HasColumnType("integer");
 
                     b.HasKey("UserId");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("BBB_ApplicationDashboard.Domain.Entities.WorkflowSetupFailure", b =>
+                {
+                    b.Property<Guid>("WorkflowSetupFailureID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExecutionUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HubSpotID")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsResolved")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("WorkflowSetupFailureID");
+
+                    b.HasIndex("ResolvedByUserId");
+
+                    b.ToTable("WorkflowSetupFailures");
+                });
+
+            modelBuilder.Entity("BBB_ApplicationDashboard.Domain.Session", b =>
+                {
+                    b.Property<string>("Token")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("SessionSource")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Token");
+
+                    b.ToTable("Sessions");
+                });
+
+            modelBuilder.Entity("BBB_ApplicationDashboard.Domain.Entities.WorkflowSetupFailure", b =>
+                {
+                    b.HasOne("BBB_ApplicationDashboard.Domain.Entities.User", "ResolvedBy")
+                        .WithMany()
+                        .HasForeignKey("ResolvedByUserId");
+
+                    b.Navigation("ResolvedBy");
                 });
 #pragma warning restore 612, 618
         }

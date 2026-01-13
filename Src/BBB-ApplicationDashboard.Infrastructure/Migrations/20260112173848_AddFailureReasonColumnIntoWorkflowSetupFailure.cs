@@ -1,20 +1,19 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace BBB_ApplicationDashboard.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCreatedAtInAccreditation : Migration
+    public partial class AddFailureReasonColumnIntoWorkflowSetupFailure : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<DateTime>(
-                name: "CreatedAt",
-                table: "Accreditations",
-                type: "timestamp with time zone",
+            migrationBuilder.AddColumn<string>(
+                name: "FailureReason",
+                table: "WorkflowSetupFailures",
+                type: "text",
                 nullable: true);
         }
 
@@ -22,8 +21,8 @@ namespace BBB_ApplicationDashboard.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "CreatedAt",
-                table: "Accreditations");
+                name: "FailureReason",
+                table: "WorkflowSetupFailures");
         }
     }
 }

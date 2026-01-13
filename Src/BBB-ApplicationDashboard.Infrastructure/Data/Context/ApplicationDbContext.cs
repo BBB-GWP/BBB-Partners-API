@@ -10,9 +10,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Accreditation> Accreditations { get; set; }
     public DbSet<ActivityEvent> ActivityEvents => Set<ActivityEvent>();
-
     public DbSet<User> Users { get; set; }
     public DbSet<Session> Sessions { get; set; }
+    public DbSet<WorkflowSetupFailure> WorkflowSetupFailures { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
