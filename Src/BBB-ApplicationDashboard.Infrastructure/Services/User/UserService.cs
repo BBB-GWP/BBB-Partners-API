@@ -84,6 +84,7 @@ public class UserService(ApplicationDbContext context) : IUserService
             .Take(pageSize)
             .Select(a => new InternalUserResponse
             {
+                UserId = a.UserId,
                 Email = a.Email,
                 IsActive = a.IsActive,
                 IsAdmin = a.IsAdmin,
